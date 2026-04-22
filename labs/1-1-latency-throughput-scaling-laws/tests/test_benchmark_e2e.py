@@ -28,6 +28,7 @@ def test_output_parseable(tmp_config: Path, capsys) -> None:
     run_benchmark(tmp_config)
     captured = capsys.readouterr().out
 
+    assert "WORKER SWEEP" in captured
     assert "BENCHMARK RESULTS" in captured
     assert "Serial" in captured
     assert "Parallel" in captured

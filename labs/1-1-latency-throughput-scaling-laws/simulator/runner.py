@@ -48,6 +48,96 @@ def _run_condition(
     return summary
 
 
+def _worker_counts_for_sweep(max_workers: int) -> list[int]:
+    out: list[int] = []
+    w = 2
+    while w <= max_workers:
+        out.append(w)
+        w *= 2
+    return out
+
+
+def _find_optimal_workers(
+    service_time_ms: float,
+    serial_mean_ms: float,
+    probe_requests: int,
+    max_workers: int,
+    fallback_workers: int,
+) -> tuple[int, list[dict]]:
+    p95_threshold = 2.0 * serial_mean_ms
+    counts = _worker_counts_for_sweep(max_workers)
+    if not counts:
+        return max(2, min(fallback_workers, max(1, max_workers))), []
+
+    sweep_results: list[dict] = []
+    best_workers = max(2, min(fallback_workers, max_workers))
+    prev_throughput: float | None = None
+
+    for w in counts:
+        n = max(probe_requests, w, 10)
+        probe_ids = list(range(1, n + 1))
+        r = _run_condition("Probe", w, probe_ids, service_time_ms)
+
+        if r["p95_ms"] > p95_threshold:
+            sweep_results.append(
+                {
+                    "workers": w,
+                    "throughput_rps": r["throughput_rps"],
+                    "p95_ms": r["p95_ms"],
+                    "status": "OVER THRESHOLD",
+                }
+            )
+            break
+
+        if prev_throughput is not None and r["throughput_rps"] < prev_throughput:
+            sweep_results.append(
+                {
+                    "workers": w,
+                    "throughput_rps": r["throughput_rps"],
+                    "p95_ms": r["p95_ms"],
+                    "status": "THROUGHPUT REGRESSION",
+                }
+            )
+            break
+
+        sweep_results.append(
+            {
+                "workers": w,
+                "throughput_rps": r["throughput_rps"],
+                "p95_ms": r["p95_ms"],
+                "status": "ok",
+            }
+        )
+        best_workers = w
+        prev_throughput = r["throughput_rps"]
+
+    return best_workers, sweep_results
+
+
+def _print_worker_sweep(
+    sweep_results: list[dict],
+    p95_threshold: float,
+    optimal_workers: int,
+) -> None:
+    print("WORKER SWEEP")
+    print(f"(threshold p95 <= {p95_threshold:.2f} ms)")
+    print()
+
+    header = f"{'Workers':>7} {'Throughput':>12} {'p95(ms)':>9} {'Status':<20}"
+    print(header)
+    print("-" * len(header))
+
+    for row in sweep_results:
+        print(
+            f"{row['workers']:>7} {row['throughput_rps']:>10.2f} r/s "
+            f"{row['p95_ms']:>9.2f} {row['status']:<20}"
+        )
+
+    print()
+    print(f"=> Optimal workers: {optimal_workers}")
+    print()
+
+
 def _print_report(results: list[dict]) -> None:
     print(_SEPARATOR)
     print("BENCHMARK RESULTS")
@@ -77,36 +167,52 @@ def run_benchmark(config_path: str | Path | None = None) -> list[dict]:
     cfg = load_config(config_path)
 
     service_time_ms: float = cfg.get("service_time_ms", 10)
-    workers: int = cfg.get("workers", os.cpu_count() or 4)
+    fallback_workers: int = cfg.get("workers", os.cpu_count() or 4)
     total_requests: int = cfg.get("total_requests", 500)
     saturated_multiplier: int = cfg.get("saturated_multiplier", 3)
+    max_workers: int = int(cfg.get("max_workers", 64))
+    probe_requests: int = int(cfg.get("probe_requests", 100))
 
-    print(f"Config: service_time={service_time_ms}ms, workers={workers}, "
-          f"requests={total_requests}, saturated_multiplier={saturated_multiplier}")
+    print(
+        f"Config: service_time={service_time_ms}ms, workers=auto(max={max_workers}), "
+        f"probe={probe_requests}, requests={total_requests}, "
+        f"saturated_multiplier={saturated_multiplier}"
+    )
     print()
 
     results: list[dict] = []
 
-    # --- Serial (1 worker) ---
     serial_ids = generate_serial(total_requests)
     results.append(
         _run_condition("Serial", 1, serial_ids, service_time_ms)
     )
 
-    # --- Parallel (N workers) ---
+    serial_mean = results[0]["mean_ms"]
+    p95_threshold = 2.0 * serial_mean
+    optimal_workers, sweep_rows = _find_optimal_workers(
+        service_time_ms,
+        serial_mean,
+        probe_requests,
+        max_workers,
+        fallback_workers,
+    )
+    _print_worker_sweep(sweep_rows, p95_threshold, optimal_workers)
+
     parallel_ids = generate_parallel(total_requests)
     results.append(
-        _run_condition("Parallel", workers, parallel_ids, service_time_ms)
+        _run_condition("Parallel", optimal_workers, parallel_ids, service_time_ms)
     )
 
-    # --- Saturated (N workers, excess load with arrival rate) ---
     saturated_ids = generate_saturated(total_requests, saturated_multiplier)
-    capacity_rps = workers / (service_time_ms / 1000.0)
+    capacity_rps = optimal_workers / (service_time_ms / 1000.0)
     overload_rps = capacity_rps * 1.5
     inter_arrival_ms = 1000.0 / overload_rps
     results.append(
         _run_condition(
-            "Saturated", workers, saturated_ids, service_time_ms,
+            "Saturated",
+            optimal_workers,
+            saturated_ids,
+            service_time_ms,
             inter_arrival_ms=inter_arrival_ms,
         )
     )

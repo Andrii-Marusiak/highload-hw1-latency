@@ -23,6 +23,8 @@ def tmp_config(tmp_path: Path) -> Path:
         workers: 2
         total_requests: 20
         saturated_multiplier: 2
+        max_workers: 2
+        probe_requests: 20
     """))
     return config
 

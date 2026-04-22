@@ -18,6 +18,8 @@ def test_runner_loads_config(tmp_config: Path) -> None:
     assert cfg["workers"] == 2
     assert cfg["total_requests"] == 20
     assert cfg["saturated_multiplier"] == 2
+    assert cfg["max_workers"] == 2
+    assert cfg["probe_requests"] == 20
 
 
 def test_runner_output_structure(tmp_config: Path) -> None:
