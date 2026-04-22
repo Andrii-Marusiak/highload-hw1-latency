@@ -1,0 +1,27 @@
+Config: service_time=10ms, workers=auto(max=64), probe=100, requests=500, saturated_multiplier=3
+
+WORKER SWEEP
+(threshold p95 <= 24.04 ms)
+
+Workers   Throughput   p95(ms) Status              
+---------------------------------------------------
+      2     164.45 r/s     14.90 ok                  
+      4     322.36 r/s     14.72 ok                  
+      8     663.50 r/s     14.37 ok                  
+     16    1215.85 r/s     14.08 ok                  
+     32    2108.19 r/s     14.14 ok                  
+     64    3306.07 r/s     13.99 ok                  
+
+=> Optimal workers: 64
+
+============================================================
+BENCHMARK RESULTS
+============================================================
+
+Condition    Workers Requests Rejected  Mean(ms)   p95(ms)   Throughput   Duration
+----------------------------------------------------------------------------------
+Serial             1      500        0     12.02     14.79      82.80 r/s    6.039 s
+Parallel          64      500        0     11.70     14.21    4765.34 r/s    0.105 s
+Saturated         64     1500        0     11.33     13.99    5324.54 r/s    0.282 s
+
+============================================================
