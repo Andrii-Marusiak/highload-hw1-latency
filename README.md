@@ -9,6 +9,7 @@ benchmark, improve, and document.
 | #   | Directory | Topic |
 |-----|-----------|-------|
 | 1-1 | [labs/1-1-latency-throughput-scaling-laws](labs/1-1-latency-throughput-scaling-laws/) | Latency, Throughput, and Scaling Laws |
+| 1-2 | [labs/1-2-workload-characterization-bottleneck-analysis](labs/1-2-workload-characterization-bottleneck-analysis/) | Workload Characterization and Bottleneck Analysis |
 
 ## Getting Started
 
@@ -36,6 +37,12 @@ hlsa2-labs/
     1-1-latency-throughput-scaling-laws/
       README.md      ← lab setup, how to run, config reference
       simulator/     ← Python package (the code you benchmark and improve)
+      scripts/       ← benchmark runner
+      tests/         ← automated tests
+      results/       ← your benchmark output (committed by you)
+    1-2-workload-characterization-bottleneck-analysis/
+      README.md      ← lab setup, how to run, config reference
+      simulator/     ← Python package (arrival patterns, R/W workloads)
       scripts/       ← benchmark runner
       tests/         ← automated tests
       results/       ← your benchmark output (committed by you)
