@@ -15,7 +15,7 @@ workload:
 
 infra:
   replication_factor: 3         # storage replicas (>=1)
-  cache_hit_ratio: 0.80         # assumed hit rate (0..1) for the read cache
+  cache_hit_ratio: 0.90         # assumed hit rate (0..1) for the read cache
   index_overhead: 0.30          # extra storage from secondary indexes (0.30 = +30%)
   fan_out_per_write: 2.0        # async change-events per write (search index, audit, ...)
   write_amplification: 1.4      # journal/compaction multiplier on writes hitting disk
