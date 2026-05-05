@@ -22,8 +22,8 @@ THROUGHPUT
 LATENCY (5,000-sample benchmark, 1.25 s wall)
 ------------------------------------------------------------------------
   p50:                              0.69 ms
-  p95:                              6.90 ms
-  p99:                              8.41 ms
+  p95:                              6.97 ms
+  p99:                              8.63 ms
   mean:                             1.98 ms
   cache hit rate (observed):       0.807   (cfg: 0.800)
 
