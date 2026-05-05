@@ -1,14 +1,37 @@
-# Environment
-
-* Python 3.14.4
-* masOs Darwin Kernel Version 24.3.0
-* CPU count: 12 (Apple M3 Pro)
+# Lab 1-3: Capacity Estimation — Results
 
 ---
 
-# Estimate vs. Measured — Find the Missing Multiplier
+## Section 1 — Environment
 
-## Comparison Table
+| Field               | Value                                                                                    |
+|---------------------|------------------------------------------------------------------------------------------|
+| Hardware            | Apple M3 Pro, 12 cores, RAM 18 GB, NIC 10 Gbps                                          |
+| Python version      | 3.14.4                                                                                   |
+| OS                  | macOS Darwin 24.3.0                                                                      |
+
+---
+
+## Section 2 — Initial Capacity Estimate
+
+| Dimension                             | Estimated value        |
+|---------------------------------------|------------------------|
+| Peak read QPS                         | 6,250                  |
+| Peak write QPS                        | 695                    |
+| Internal write QPS (× RF)             | 2,085                  |
+| Ingress bandwidth                     | 2.85 MB/s              |
+| Egress bandwidth                      | 25.60 MB/s             |
+| Replication egress                    | 8.54 MB/s              |
+| Storage at 12 months (physical + headroom) | 449 TB            |
+| Working-set memory                    | 350 TB/node            |
+| p99 latency                           | 1.2 ms (mean only, no tail model) |
+| Cost per 1,000 QPS                    | $151.00                |
+
+---
+
+## Section 3 — Estimate vs. Measured Discrepancies
+
+### Comparison Table
 
 | Dimension                     | Estimated       | Measured (bench avg) | Ratio (M / E) | Missing multiplier                                                                 |
 |-------------------------------|-----------------|----------------------|----------------|------------------------------------------------------------------------------------|
@@ -16,7 +39,7 @@
 | Peak write QPS                | 695             | 694                  | 1.00           | —                                                                                  |
 | Internal write QPS (× RF)    | 2,085           | 2,917 (derived¹)     | 1.40           | write amplification (1.4×) excluded from estimate                                  |
 | Ingress bandwidth (MB/s)     | 2.85            | 27.13                | 9.52           | read-request payload excluded — benchmark counts (reads + writes) × payload        |
-| Egress bandwidth (MB/s)      | 25.60           | 24.41                | 0.95           | —                                                                                  |
+| Egress bandwidth (MB/s)      | 25.60           | 24.41                | 0.95           | within model accuracy                                                              |
 | Replication egress (MB/s)    | 8.54            | 5.43                 | 0.64           | used × RF (3) instead of × (RF − 1) = 2; primary holds one copy locally           |
 | Storage growth (GB/day)      | 320             | 104.14               | 0.33           | burst factor (4×) applied to daily volume instead of average QPS; write amp missed |
 | Working-set memory (GB/node) | 350,000 (350 TB)| N/A                  | —              | on-disk storage confused with in-RAM working set; benchmark does not report memory |
@@ -25,79 +48,49 @@
 > ¹ Benchmark does not output internal write QPS directly. Derived as `write_peak × RF × write_amp = 694 × 3 × 1.4 = 2,917`.
 > Benchmark reports "Effective storage QPS" = 2,220, which is a different concept: `read_miss_QPS + write_QPS × write_amp`.
 
-## Rows Outside 0.5 – 2.0×
+### Ingress bandwidth — ratio 9.52×
 
-### 1. Ingress bandwidth — ratio 9.52×
+The estimate only counted write payload (`695 × 4096 = 2.85 MB/s`). The benchmark counts all requests (reads + writes) at full payload size: `6,944 × 4096 = 27.13 MiB/s`. In a real system read requests are much smaller than responses (just a key/query), so the benchmark's definition is a worst-case model. Fix: add a read-request size parameter and include `read_QPS × read_request_bytes` in ingress.
 
-The estimate only counted write payload (`695 × 4096 = 2.85 MB/s`).
-The benchmark counts **all** requests (reads + writes) at full payload size: `6,944 × 4096 = 27.13 MiB/s`.
-In a real system read requests are much smaller than responses (just a key/query), so the benchmark's definition is a worst-case model.
-**Fix:** add a read-request size parameter and include `read_QPS × read_request_bytes` in ingress.
+### Storage growth — ratio 0.33× (estimate 3× too high)
 
-### 2. Storage growth — ratio 0.33× (estimate 3× too high)
+Two compounding errors: first, the estimate multiplied peak write QPS (695) × 86,400 s for daily volume, but daily volume should use average write QPS (174), overestimating by the burst factor (4×); second, write amplification (1.4×) was omitted from the estimate. Net effect: `4.0 / 1.4 = 2.86×` overestimate, matching the observed ratio of `320 / 104.14 ≈ 3.07`. Fix: use `daily_writes = avg_write_QPS × 86,400`, then multiply by `(1 + index_overhead) × write_amplification`.
 
-Two compounding errors:
+### p99 latency — ratio 7.1×
 
-- **Peak vs. average:** the estimate multiplied **peak** write QPS (695) × 86,400 s for daily volume. Daily volume should use **average** write QPS (174). This overestimated by the burst factor (4×).
-- **Write amplification omitted:** the estimate included index overhead (+30%) but not write amplification (1.4×), underestimating by 1.4×.
+The estimate only computed weighted-mean service time: `0.80 × 0.5 ms + 0.20 × 4.0 ms = 1.2 ms`. It did not model tail latency at all. The benchmark's p99 (8.52 ms) reflects the fact that ~20% of requests hit the storage path (4 ms base), and at the 99th percentile nearly all sampled requests are storage-path hits. Typical p99/mean ratio for mixed cache+storage workloads is 5–10×. Fix: model p99 as `storage_service_time × (1 + queueing_factor)` or use Little's Law to estimate queue depth at peak. A simple heuristic — `p99 ≈ 2 × storage_service_time = 8 ms` — would have been within 6% of the measured value.
 
-Net effect: `4.0 / 1.4 = 2.86×` overestimate, matching the observed ratio of `320 / 104.14 ≈ 3.07`.
+### Working-set memory — fundamentally wrong
 
-**Fix:** use `daily_writes = avg_write_QPS × 86,400`, then multiply by `(1 + index_overhead) × write_amplification`.
-
-### 3. p99 latency — ratio 7.1×
-
-The estimate only computed weighted-mean service time:
-`0.80 × 0.5 ms + 0.20 × 4.0 ms = 1.2 ms`.
-
-It did not model tail latency at all. The benchmark's p99 (8.52 ms) reflects the fact that ~20% of requests hit the storage path (4 ms base), and at the 99th percentile nearly all sampled requests are storage-path hits.
-Typical p99/mean ratio for mixed cache+storage workloads is 5–10×.
-
-**Fix:** model p99 as `storage_service_time × (1 + queueing_factor)` or use Little's Law to estimate queue depth at peak. A simple heuristic: `p99 ≈ 2 × storage_service_time = 8 ms` would have been within 6% of the measured value.
-
-### 4. Working-set memory — fundamentally wrong
-
-The estimate computed:
-`hot_data_per_node (150 TB) + cache (120 TB) + 30% overhead = 350 TB/node`
-
-This conflated **total on-disk storage** with **in-RAM working set**. No server has 350 TB of RAM.
-Working-set memory should be: `cache_size + per_connection_buffers + OS/runtime overhead`.
-A reasonable estimate: `cache_size = hit_ratio × daily_hot_reads × avg_object_size × TTL` or size it to hold the hot fraction of keys that produce 80% cache hit rate.
-
-The benchmark does not output a memory metric, so no measured value is available.
-
-## Rows Marginally Inside (but noteworthy)
-
-### Replication egress — ratio 0.64×
-
-The estimate used `× RF (3)` for replication traffic. The primary node already holds one copy; it only replicates to `RF − 1 = 2` peers. This overcounts by 1.5×.
-
-### Internal write QPS — ratio 1.40×
-
-The estimate computed `write_peak × RF` but excluded write amplification (1.4×). Each replica performs journal/compaction writes locally, so the true internal write IOPS is `write_peak × RF × write_amp`.
-
-## Summary
-
-| Status | Count | Rows |
-|--------|-------|------|
-| ✅ Within 0.5 – 2.0× | 5 | Peak read QPS, Peak write QPS, Internal write QPS, Egress bandwidth, Replication egress |
-| ❌ Outside 0.5 – 2.0× | 3 | Ingress bandwidth, Storage growth, p99 latency |
-| ⚠️ Not comparable       | 1 | Working-set memory (no benchmark metric) |
-
-**The model is not yet useful** — 3 of 8 comparable dimensions fall outside the ±2× threshold.
-The two highest-impact fixes:
-
-1. **Storage growth:** use average QPS (not peak) for daily volume and include write amplification.
-   This single fix would bring the ratio from 0.33 to ~1.0.
-2. **p99 latency:** add a tail-latency multiplier (≈ 2× storage service time as a starting heuristic).
-   This would bring the ratio from 7.1 to ~1.0.
-
-After these two corrections, re-run the benchmark to verify the model predicts within 30%.
-The next input to tighten after that would be **ingress bandwidth** — adding a separate `read_request_bytes` parameter to distinguish read request size from response payload size.
+The estimate computed `hot_data_per_node (150 TB) + cache (120 TB) + 30% overhead = 350 TB/node`, conflating total on-disk storage with in-RAM working set. No server has 350 TB of RAM. Working-set memory should be: `cache_size + per_connection_buffers + OS/runtime overhead`. The benchmark does not output a memory metric, so no measured value is available.
 
 ---
 
-# Step 5: Improvement — Option A (Add a Caching Tier)
-Root cause of the largest measured gap (p99 latency 7.1×) is the 20 % of reads that miss cache and hit the 4 ms storage path. Raising `cache_hit_ratio` from 0.80 → 0.90 halves the storage-tier read QPS and reduces the queue depth that drives tail latency — without any hardware change and in hours rather than weeks.
+## Section 4 — Improvement Before / After
 
-**New alert:** monitor `cache_hit_ratio` in real time; a drop of > 10 points from 90 % signals an eviction wave or cold-start event and should page on-call before storage tier saturation occurs.
+Option A raised `cache_hit_ratio` from 0.80 → 0.90, targeting a reduction in storage-tier read QPS and mean latency.
+
+| Metric                       | Baseline | Improved | Delta                  |
+|------------------------------|----------|----------|------------------------|
+| Peak read QPS observed       | 6,250    | 6,250    | 0                      |
+| Peak write QPS observed      | 694      | 694      | 0                      |
+| Storage at 12 months (TB)    | 109.84   | 109.84   | 0                      |
+| Total bandwidth (MB/s)       | 35.26    | 35.26    | 0                      |
+| p99 latency (ms)             | 8.41     | 8.55     | +0.14 (within noise)   |
+| Mean latency (ms)            | 1.98     | 1.62     | −0.36 (−18%)           |
+| Effective storage QPS        | 2,220    | 1,600    | −620 (−28%)            |
+| Cost per 1,000 QPS ($)       | 1,770.80 | 1,770.80 | 0                      |
+
+p99 did not improve because the tail is dominated by the storage-path service time (4 ms), which is unchanged; Option A reduced the fraction of requests hitting that path (20% → 10%) but not the path's own latency. The primary wins are mean latency (−18%) and effective storage QPS (−28%), which increases headroom on the storage tier before it saturates.
+
+---
+
+## Section 5 — New Risk + Monitoring Metric
+
+Raising the cache hit ratio to 0.90 creates a cache stampede risk: if the hot key set shifts suddenly (e.g. a viral event) or a cold-start occurs after a node restart, the hit ratio drops sharply and all cache-miss reads simultaneously flood the storage tier, potentially saturating it faster than auto-scaling can respond. The exact metric that would catch this early is `cache_hit_ratio` — a drop of more than 10 points from the configured value (i.e. below 0.80 when target is 0.90) should trigger an on-call alert before storage tier saturation occurs.
+
+---
+
+## Section 6 — Next Bottleneck Forecast
+
+**Compute nodes** will saturate first as load doubles. At current load 3 nodes provide 15,000 QPS capacity at 14.81% peak utilisation. Doubling write QPS doubles the total workload to 13,888 peak QPS, pushing utilisation to **92.6%** — far above the 60% ceiling implied by the 40% headroom target (`utilisation_at_peak = 13,888 / 15,000 = 92.6%`). The model multiplier that shows this: `nodes_required = ⌈peak_QPS / (instance_qps_capacity × (1 − buffer))⌉ = ⌈13,888 / 3,000⌉ = 5 nodes` — two more nodes are needed before load doubles. The metric to monitor is `utilisation_at_peak` crossing 60%. The single next change is to scale the cluster from 3 to 5 nodes, or vertically increase `instance_qps_capacity` per node before utilisation breaches the buffer threshold.
