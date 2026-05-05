@@ -1,5 +1,4 @@
 # Lab 1-3: Capacity Estimation — Results
-
 ---
 
 ## Section 1 — Environment
@@ -93,4 +92,4 @@ Raising the cache hit ratio to 0.90 creates a cache stampede risk: if the hot ke
 
 ## Section 6 — Next Bottleneck Forecast
 
-**Compute nodes** will saturate first as load doubles. At current load 3 nodes provide 15,000 QPS capacity at 14.81% peak utilisation. Doubling write QPS doubles the total workload to 13,888 peak QPS, pushing utilisation to **92.6%** — far above the 60% ceiling implied by the 40% headroom target (`utilisation_at_peak = 13,888 / 15,000 = 92.6%`). The model multiplier that shows this: `nodes_required = ⌈peak_QPS / (instance_qps_capacity × (1 − buffer))⌉ = ⌈13,888 / 3,000⌉ = 5 nodes` — two more nodes are needed before load doubles. The metric to monitor is `utilisation_at_peak` crossing 60%. The single next change is to scale the cluster from 3 to 5 nodes, or vertically increase `instance_qps_capacity` per node before utilisation breaches the buffer threshold.
+**Compute nodes** will saturate first as load doubles. At current load 3 nodes provide 15,000 QPS capacity at 14.81% peak utilisation. Doubling write QPS doubles the total workload to 13,888 peak QPS, pushing utilisation to **92.6%** — far above the 60% ceiling implied by the 40% headroom target. The single next change is to scale the cluster from 3 to 5 nodes, or vertically increase `instance_qps_capacity` per node before utilisation breaches the buffer threshold.
