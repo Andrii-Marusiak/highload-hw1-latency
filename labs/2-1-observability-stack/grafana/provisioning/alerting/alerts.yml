@@ -96,10 +96,12 @@ groups:
                   |> range(start: -5m)
                   |> filter(fn: (r) => r._measurement == "http_request_duration_ms")
                   |> filter(fn: (r) => r._field != "count" and r._field != "sum")
-                  |> group(columns: ["_field"])
                   |> aggregateWindow(every: 5m, fn: last, createEmpty: false)
+                  |> group(columns: ["_time", "_field"])
+                  |> sum()
                   |> group(columns: ["_time"])
                   |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))
+                  |> sort(columns: ["le"])
                   |> histogramQuantile(quantile: 0.95, upperBoundColumn: "le")
                   |> group()
           - refId: B
