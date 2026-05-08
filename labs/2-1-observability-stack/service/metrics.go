@@ -21,7 +21,7 @@ var (
 		prometheus.HistogramOpts{
 			Name:    "http_request_duration_ms",
 			Help:    "HTTP request latency in milliseconds",
-			Buckets: []float64{5, 10, 25, 50, 75, 100, 150, 200, 300, 500, 1000},
+			Buckets: []float64{5, 10, 25, 50, 75, 100, 150, 200, 300, 500, 1000, 2500, 5000, 10000, 15000},
 		},
 		[]string{"route", "method"},
 	)
