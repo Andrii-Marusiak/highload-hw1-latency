@@ -90,7 +90,7 @@ func initLogger() {
 			return a
 		},
 	})
-	appLogger = slog.New(&serviceHandler{inner: jsonHandler, service: "observability-service"})
+	appLogger = slog.New(&serviceHandler{inner: jsonHandler, service: "api-service"})
 	slog.SetDefault(appLogger)
 }
 

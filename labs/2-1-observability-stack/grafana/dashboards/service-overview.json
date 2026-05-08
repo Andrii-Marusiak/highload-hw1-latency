@@ -19,6 +19,14 @@
   "links": [],
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Row 1 — RED metrics (request health)",
+      "type": "row"
+    },
+    {
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {
@@ -32,7 +40,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "id": 1,
       "options": {
         "legend": {
@@ -49,7 +57,7 @@
           "refId": "A"
         }
       ],
-      "title": "Request Rate (req/min by endpoint)",
+      "title": "Request Rate (req/min by route)",
       "type": "timeseries"
     },
     {
@@ -72,7 +80,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "id": 2,
       "options": {
         "colorMode": "background",
@@ -100,73 +108,6 @@
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisLabel": "latency (ms)",
-            "lineWidth": 2,
-            "showPoints": "never"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "transparent", "value": null },
-              { "color": "red", "value": 200 }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "p50" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "p95" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "p99" },
-            "properties": [
-              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
-              { "id": "custom.thresholdsStyle", "value": { "mode": "line" } }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
-      "id": 3,
-      "options": {
-        "legend": {
-          "calcs": ["lastNotNull", "max", "mean"],
-          "displayMode": "table",
-          "placement": "bottom"
-        },
-        "tooltip": { "mode": "multi" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"http_request_duration_ms\")\n  |> filter(fn: (r) => r._field != \"count\" and r._field != \"sum\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> difference(nonNegative: true, columns: [\"_value\"])\n  |> group(columns: [\"_time\", \"_field\"])\n  |> sum()\n  |> group(columns: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))\n  |> sort(columns: [\"le\"])\n  |> histogramQuantile(quantile: 0.50, upperBoundColumn: \"le\")\n  |> set(key: \"_field\", value: \"p50\")\n  |> group(columns: [\"_field\"])",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"http_request_duration_ms\")\n  |> filter(fn: (r) => r._field != \"count\" and r._field != \"sum\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> difference(nonNegative: true, columns: [\"_value\"])\n  |> group(columns: [\"_time\", \"_field\"])\n  |> sum()\n  |> group(columns: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))\n  |> sort(columns: [\"le\"])\n  |> histogramQuantile(quantile: 0.95, upperBoundColumn: \"le\")\n  |> set(key: \"_field\", value: \"p95\")\n  |> group(columns: [\"_field\"])",
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"http_request_duration_ms\")\n  |> filter(fn: (r) => r._field != \"count\" and r._field != \"sum\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> difference(nonNegative: true, columns: [\"_value\"])\n  |> group(columns: [\"_time\", \"_field\"])\n  |> sum()\n  |> group(columns: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))\n  |> sort(columns: [\"le\"])\n  |> histogramQuantile(quantile: 0.99, upperBoundColumn: \"le\")\n  |> set(key: \"_field\", value: \"p99\")\n  |> group(columns: [\"_field\"])",
-          "refId": "C"
-        }
-      ],
-      "title": "Latency Histogram — p50 / p95 / p99",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
-      "fieldConfig": {
-        "defaults": {
           "color": { "mode": "scheme" },
           "custom": {
             "hideFrom": { "legend": false, "tooltip": false, "viz": false },
@@ -175,7 +116,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
       "id": 7,
       "options": {
         "calculate": false,
@@ -217,18 +158,39 @@
         "defaults": {
           "color": { "mode": "palette-classic" },
           "custom": {
-            "axisLabel": "CPU %",
+            "axisLabel": "latency (ms)",
             "lineWidth": 2,
             "showPoints": "never"
           },
-          "max": 100,
-          "min": 0,
-          "unit": "percent"
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "transparent", "value": null },
+              { "color": "red", "value": 200 }
+            ]
+          },
+          "unit": "ms"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "p50" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p95" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p99" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
+              { "id": "custom.thresholdsStyle", "value": { "mode": "line" } }
+            ]
+          }
+        ]
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-      "id": 4,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "id": 3,
       "options": {
         "legend": {
           "calcs": ["lastNotNull", "max", "mean"],
@@ -240,53 +202,295 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\")\n  |> filter(fn: (r) => r._field == \"usage_idle\")\n  |> filter(fn: (r) => r.cpu == \"cpu-total\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: 100.0 - r._value}))\n  |> set(key: \"_field\", value: \"cpu_utilisation\")",
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"http_request_duration_ms\")\n  |> filter(fn: (r) => r._field != \"count\" and r._field != \"sum\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> difference(nonNegative: true, columns: [\"_value\"])\n  |> group(columns: [\"_time\", \"_field\"])\n  |> sum()\n  |> group(columns: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))\n  |> sort(columns: [\"le\"])\n  |> histogramQuantile(quantile: 0.50, upperBoundColumn: \"le\")\n  |> set(key: \"_field\", value: \"p50\")\n  |> group(columns: [\"_field\"])",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"http_request_duration_ms\")\n  |> filter(fn: (r) => r._field != \"count\" and r._field != \"sum\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> difference(nonNegative: true, columns: [\"_value\"])\n  |> group(columns: [\"_time\", \"_field\"])\n  |> sum()\n  |> group(columns: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))\n  |> sort(columns: [\"le\"])\n  |> histogramQuantile(quantile: 0.95, upperBoundColumn: \"le\")\n  |> set(key: \"_field\", value: \"p95\")\n  |> group(columns: [\"_field\"])",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"http_request_duration_ms\")\n  |> filter(fn: (r) => r._field != \"count\" and r._field != \"sum\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> difference(nonNegative: true, columns: [\"_value\"])\n  |> group(columns: [\"_time\", \"_field\"])\n  |> sum()\n  |> group(columns: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value, le: float(v: r._field)}))\n  |> sort(columns: [\"le\"])\n  |> histogramQuantile(quantile: 0.99, upperBoundColumn: \"le\")\n  |> set(key: \"_field\", value: \"p99\")\n  |> group(columns: [\"_field\"])",
+          "refId": "C"
+        }
+      ],
+      "title": "Latency p50 / p95 / p99 (alert threshold p99 = 200ms)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "id": 101,
+      "panels": [],
+      "title": "Row 2 — USE metrics (resource health)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 27 },
+      "id": 20,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\")\n  |> filter(fn: (r) => r._field == \"usage_active\")\n  |> filter(fn: (r) => r.cpu == \"cpu-total\")\n  |> last()\n  |> set(key: \"_field\", value: \"cpu_usage_active\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> group(columns: [\"_field\"])",
           "refId": "A"
         }
       ],
-      "title": "CPU Utilisation (%)",
+      "title": "CPU Utilisation (gauge)",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "custom": {
+            "axisLabel": "CPU %",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 10
+          },
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "transparent", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 27 },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "max", "mean"],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\")\n  |> filter(fn: (r) => r._field == \"usage_active\")\n  |> filter(fn: (r) => r.cpu == \"cpu-total\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: mean, createEmpty: false)\n  |> set(key: \"_field\", value: \"cpu_usage_active\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> group(columns: [\"_field\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Utilisation (time series)",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "influxdb", "uid": "influxdb" },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "orange", "value": 85 },
+              { "color": "red", "value": 95 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 27 },
+      "id": 21,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mem\")\n  |> filter(fn: (r) => r._field == \"used_percent\")\n  |> last()\n  |> set(key: \"_field\", value: \"mem_used_percent\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> group(columns: [\"_field\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Used % (gauge)",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "purple" },
           "custom": {
-            "axisLabel": "saturation %",
+            "axisLabel": "Memory %",
             "lineWidth": 2,
-            "showPoints": "never"
+            "showPoints": "never",
+            "fillOpacity": 10
           },
           "max": 100,
           "min": 0,
           "unit": "percent"
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byFrameRefID", "options": "A" },
-            "properties": [{ "id": "displayName", "value": "pool_saturation_pct" }]
-          }
-        ]
+        "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
-      "id": 5,
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 27 },
+      "id": 22,
       "options": {
         "legend": {
-          "calcs": ["lastNotNull", "max"],
-          "displayMode": "table",
+          "calcs": ["lastNotNull", "max", "mean"],
+          "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltip": { "mode": "single" }
+        "tooltip": { "mode": "multi" }
       },
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "influxdb" },
-          "query": "waiting = from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"db_connections_waiting\")\n  |> filter(fn: (r) => r._field == \"gauge\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> set(key: \"_field\", value: \"waiting\")\n  |> group(columns: [\"_field\"])\n\nactive = from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"db_connections_active\")\n  |> filter(fn: (r) => r._field == \"gauge\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> set(key: \"_field\", value: \"active\")\n  |> group(columns: [\"_field\"])\n\nunion(tables: [waiting, active])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({r with _value: if exists r.active and exists r.waiting and (r.active + r.waiting) > 0.0 then r.waiting / (r.active + r.waiting) * 100.0 else 0.0}))\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> set(key: \"_field\", value: \"pool_saturation_pct\")\n  |> group(columns: [\"_field\"])",
+          "query": "from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mem\")\n  |> filter(fn: (r) => r._field == \"used_percent\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: mean, createEmpty: false)\n  |> set(key: \"_field\", value: \"mem_used_percent\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> group(columns: [\"_field\"])",
           "refId": "A"
         }
       ],
-      "title": "DB Connection Saturation (waiting / total %)",
+      "title": "Memory Used % (time series)",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "count",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 5
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "goroutines_active" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "requests_queued" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "max", "mean"],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "goroutines = from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"goroutines_active\")\n  |> filter(fn: (r) => r._field == \"gauge\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> set(key: \"_field\", value: \"goroutines_active\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n\nqueued = from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"requests_queued\")\n  |> filter(fn: (r) => r._field == \"gauge\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> set(key: \"_field\", value: \"requests_queued\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n\nunion(tables: [goroutines, queued])\n  |> group(columns: [\"_field\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Goroutines Active vs Requests Queued (saturation)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "connections",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 5
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "db_connections_active" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "db_connections_waiting" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "max", "mean"],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "query": "active = from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"db_connections_active\")\n  |> filter(fn: (r) => r._field == \"gauge\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> set(key: \"_field\", value: \"db_connections_active\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n\nwaiting = from(bucket: \"metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"db_connections_waiting\")\n  |> filter(fn: (r) => r._field == \"gauge\")\n  |> aggregateWindow(every: duration(v: \"${resolution}\"), fn: last, createEmpty: false)\n  |> set(key: \"_field\", value: \"db_connections_waiting\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n\nunion(tables: [active, waiting])\n  |> group(columns: [\"_field\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "DB Connection Pool — active vs waiting (saturation)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "id": 102,
+      "panels": [],
+      "title": "Row 3 — Logs (contextual evidence)",
+      "type": "row"
     },
     {
       "datasource": { "type": "loki", "uid": "loki" },
@@ -294,7 +498,7 @@
         "defaults": {},
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 32 },
+      "gridPos": { "h": 11, "w": 12, "x": 0, "y": 44 },
       "id": 6,
       "options": {
         "dedupStrategy": "none",
@@ -304,17 +508,46 @@
         "showLabels": true,
         "showTime": true,
         "sortOrder": "Descending",
-        "wrapLogMessage": false
+        "wrapLogMessage": true
       },
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"docker\"} | json | level =~ \"$level\" | line_format \"{{.level}} {{.trace_id}} {{.msg}}\"",
+          "expr": "{service=\"api-service\", level=\"ERROR\"} | json | line_format \"[{{.timestamp}}] trace_id={{.trace_id}} span_id={{.span_id}} {{.msg}}\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Service Logs (filterable by trace_id and level)",
+      "title": "Error Log Stream — {service=\"api-service\", level=\"ERROR\"}",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": { "h": 11, "w": 12, "x": 12, "y": 44 },
+      "id": 24,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{service=\"api-service\"} | json | status >= 500 | line_format \"[{{.timestamp}}] {{.method}} {{.route}} status={{.status}} duration_ms={{.duration_ms}} trace_id={{.trace_id}}\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Request Log Stream — 5xx requests with route + duration_ms",
       "type": "logs"
     }
   ],
@@ -348,29 +581,6 @@
         "refresh": 2,
         "skipUrlSync": false,
         "type": "interval"
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "selected": true,
-          "text": "All",
-          "value": "$__all"
-        },
-        "hide": 0,
-        "includeAll": true,
-        "label": "Log Level",
-        "multi": false,
-        "name": "level",
-        "options": [
-          { "selected": true,  "text": "All",   "value": "$__all" },
-          { "selected": false, "text": "debug",  "value": "debug" },
-          { "selected": false, "text": "info",   "value": "info" },
-          { "selected": false, "text": "warn",   "value": "warn" },
-          { "selected": false, "text": "error",  "value": "error" }
-        ],
-        "query": "debug,info,warn,error",
-        "skipUrlSync": false,
-        "type": "custom"
       }
     ]
   },
@@ -384,5 +594,5 @@
   "timezone": "browser",
   "title": "API Service Overview",
   "uid": "service-overview",
-  "version": 2
+  "version": 3
 }

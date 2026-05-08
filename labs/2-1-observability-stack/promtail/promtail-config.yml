@@ -23,11 +23,18 @@ scrape_configs:
             stream: stream
             attrs: attrs
             tag: attrs.tag
+      - output:
+          source: output
+      - json:
+          expressions:
+            level: level
+            service: service
+            trace_id: trace_id
       - labels:
           stream:
           tag:
-      - output:
-          source: output
+          level:
+          service:
     relabel_configs:
       - source_labels: [__path__]
         regex: /var/lib/docker/containers/([^/]+)/.*

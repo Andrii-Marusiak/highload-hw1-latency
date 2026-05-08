@@ -63,6 +63,7 @@ func observabilityMiddleware(next http.Handler) http.Handler {
 		slog.InfoContext(ctx, "request completed",
 			slog.String("method", r.Method),
 			slog.String("route", route),
+			slog.Int("status", rw.statusCode),
 			slog.String("status_class", statusClass),
 			slog.Float64("duration_ms", durationMs),
 		)
