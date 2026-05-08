@@ -33,7 +33,7 @@ groups:
                   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
                   |> filter(fn: (r) => r._measurement == "http_requests_total")
                   |> filter(fn: (r) => r._field == "counter")
-                  |> filter(fn: (r) => r.status_code =~ /^5/)
+                  |> filter(fn: (r) => r.status_class == "5xx")
                   |> derivative(unit: 5m, nonNegative: true)
                   |> group()
                   |> aggregateWindow(every: 5m, fn: sum, createEmpty: false)
@@ -94,7 +94,7 @@ groups:
               query: |
                 from(bucket: "metrics")
                   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
-                  |> filter(fn: (r) => r._measurement == "http_request_duration_seconds_bucket")
+                  |> filter(fn: (r) => r._measurement == "http_request_duration_ms_bucket")
                   |> filter(fn: (r) => r._field == "gauge")
                   |> group(columns: ["le"])
                   |> aggregateWindow(every: 5m, fn: last, createEmpty: false)
@@ -124,7 +124,7 @@ groups:
               conditions:
                 - evaluator:
                     params:
-                      - 0.5
+                      - 500
                     type: gt
                   operator:
                     type: and
@@ -134,7 +134,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "P95 latency exceeds 500ms over the last 5 minutes"
+          summary: "P95 latency exceeds 500 ms over the last 5 minutes"
 
       - uid: high-cpu-utilisation
         title: "High CPU Utilisation (>80%)"

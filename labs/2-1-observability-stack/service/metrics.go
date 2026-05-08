@@ -9,42 +9,57 @@ import (
 )
 
 var (
-	httpRequestsTotal = promauto.NewCounterVec(
+	HTTPRequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_requests_total",
-			Help: "Total number of HTTP requests partitioned by method, endpoint, and status code.",
+			Help: "Total HTTP requests by route, method, and status class",
 		},
-		[]string{"method", "endpoint", "status_code"},
+		[]string{"route", "method", "status_class"},
 	)
 
-	httpRequestDuration = promauto.NewHistogramVec(
+	HTTPRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
-			Help:    "HTTP request latency in seconds partitioned by method and endpoint.",
-			Buckets: []float64{0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 1, 2.5, 5, 10},
+			Name:    "http_request_duration_ms",
+			Help:    "HTTP request latency in milliseconds",
+			Buckets: []float64{5, 10, 25, 50, 75, 100, 150, 200, 300, 500, 1000},
 		},
-		[]string{"method", "endpoint"},
+		[]string{"route", "method"},
 	)
 
-	connectionPoolActive = promauto.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "connection_pool_active",
-			Help: "Number of active connections currently in use.",
+	HTTPErrorsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_errors_total",
+			Help: "Total HTTP 5xx errors by route",
 		},
+		[]string{"route", "error_type"},
 	)
 
-	connectionPoolMax = promauto.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "connection_pool_max",
-			Help: "Maximum number of connections allowed in the pool.",
-		},
-	)
+	GoroutinesActive = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "goroutines_active",
+		Help: "Number of goroutines currently processing requests",
+	})
 
-	connectionPoolWaiting = promauto.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "connection_pool_waiting",
-			Help: "Number of requests waiting for a connection from the pool.",
+	RequestsQueued = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "requests_queued",
+		Help: "Number of requests waiting in the accept queue",
+	})
+
+	DBConnectionsActive = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "db_connections_active",
+		Help: "Number of active database connections",
+	})
+
+	DBConnectionsWaiting = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "db_connections_waiting",
+		Help: "Number of requests waiting for a DB connection",
+	})
+
+	DBQueryErrorsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "db_query_errors_total",
+			Help: "Total failed DB queries by operation type",
 		},
+		[]string{"operation"},
 	)
 )
 

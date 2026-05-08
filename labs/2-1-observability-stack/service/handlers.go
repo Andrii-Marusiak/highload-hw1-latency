@@ -15,14 +15,14 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserHandler(w http.ResponseWriter, r *http.Request) {
-	connectionPoolActive.Inc()
-	connectionPoolWaiting.Add(float64(rand.Intn(5)))
+	DBConnectionsActive.Inc()
+	DBConnectionsWaiting.Add(float64(rand.Intn(5)))
 
 	latency := time.Duration(10+rand.Intn(191)) * time.Millisecond
 	time.Sleep(latency)
 
-	connectionPoolActive.Dec()
-	connectionPoolWaiting.Set(0)
+	DBConnectionsActive.Dec()
+	DBConnectionsWaiting.Set(0)
 
 	userID := r.PathValue("id")
 	w.Header().Set("Content-Type", "application/json")
@@ -37,9 +37,10 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 	if rand.Float64() < 0.1 {
 		statusCode = http.StatusInternalServerError
 		body = `{"error":"internal server error"}`
+		DBQueryErrorsTotal.WithLabelValues("insert").Inc()
 		slog.ErrorContext(r.Context(), "order creation failed",
 			slog.String("method", r.Method),
-			slog.String("endpoint", "/api/orders"),
+			slog.String("route", "/api/orders"),
 		)
 	}
 
@@ -49,14 +50,16 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func slowHandler(w http.ResponseWriter, r *http.Request) {
-	connectionPoolActive.Inc()
-	connectionPoolWaiting.Add(float64(rand.Intn(10)))
+	RequestsQueued.Inc()
+	DBConnectionsActive.Inc()
+	DBConnectionsWaiting.Add(float64(rand.Intn(10)))
 
 	latency := time.Duration(500+rand.Intn(1501)) * time.Millisecond
 	time.Sleep(latency)
 
-	connectionPoolActive.Dec()
-	connectionPoolWaiting.Set(0)
+	RequestsQueued.Dec()
+	DBConnectionsActive.Dec()
+	DBConnectionsWaiting.Set(0)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

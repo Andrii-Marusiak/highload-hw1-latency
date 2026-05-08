@@ -8,8 +8,6 @@ import (
 
 func main() {
 	initLogger()
-	connectionPoolMax.Set(100)
-
 	startMetricsServer()
 
 	slog.InfoContext(context.Background(), "service starting",

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -41,28 +41,30 @@ func observabilityMiddleware(next http.Handler) http.Handler {
 		ctx := newTraceContext(r.Context())
 		r = r.WithContext(ctx)
 
+		GoroutinesActive.Inc()
+		defer GoroutinesActive.Dec()
+
 		rw := newResponseWriter(w)
 		start := time.Now()
-		route := sanitizeRoute(r.Pattern)
-
-		slog.InfoContext(ctx, "request started",
-			slog.String("method", r.Method),
-			slog.String("endpoint", route),
-		)
 
 		next.ServeHTTP(rw, r)
 
-		duration := time.Since(start).Seconds()
-		status := strconv.Itoa(rw.statusCode)
+		durationMs := float64(time.Since(start).Milliseconds())
+		route := sanitizeRoute(r.Pattern)
+		statusClass := fmt.Sprintf("%dxx", rw.statusCode/100)
 
-		httpRequestsTotal.WithLabelValues(r.Method, route, status).Inc()
-		httpRequestDuration.WithLabelValues(r.Method, route).Observe(duration)
+		HTTPRequestsTotal.WithLabelValues(route, r.Method, statusClass).Inc()
+		HTTPRequestDuration.WithLabelValues(route, r.Method).Observe(durationMs)
+
+		if rw.statusCode >= 500 {
+			HTTPErrorsTotal.WithLabelValues(route, "server_error").Inc()
+		}
 
 		slog.InfoContext(ctx, "request completed",
 			slog.String("method", r.Method),
-			slog.String("endpoint", route),
-			slog.String("status_code", status),
-			slog.Float64("duration_seconds", duration),
+			slog.String("route", route),
+			slog.String("status_class", statusClass),
+			slog.Float64("duration_ms", durationMs),
 		)
 	})
 }
