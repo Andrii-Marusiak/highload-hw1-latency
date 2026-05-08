@@ -116,7 +116,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 17 },
       "id": 7,
       "options": {
         "calculate": false,
@@ -189,7 +189,7 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 9 },
       "id": 3,
       "options": {
         "legend": {
