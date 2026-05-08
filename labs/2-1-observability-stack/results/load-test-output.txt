@@ -1,0 +1,277 @@
+Observability Stack Load Test
+Target: http://localhost:8080
+Phases: warm-up -> steady-state -> saturation -> cool-down
+
+Service is healthy. Starting load test...
+
+
+============================================================
+  Phase: WARM-UP
+  Duration: 15s | Target RPS: 5 | Workers: 4
+============================================================
+
+  [WARM-UP] Summary:
+    Total requests: 74
+    Errors:         6 (8.1%)
+    Latency avg:    176.4ms
+    Latency p50:    6.9ms
+    Latency p95:    1308.5ms
+    Latency p99:    1914.7ms
+
+============================================================
+  Phase: STEADY-STATE
+  Duration: 30s | Target RPS: 20 | Workers: 10
+============================================================
+
+  [STEADY-STATE] Summary:
+    Total requests: 564
+    Errors:         18 (3.2%)
+    Latency avg:    265.7ms
+    Latency p50:    27.2ms
+    Latency p95:    1588.4ms
+    Latency p99:    1920.0ms
+
+============================================================
+  Phase: SATURATION
+  Duration: 45s | Target RPS: 150 | Workers: 80
+============================================================
+
+  [SATURATION] Summary:
+    Total requests: 5635
+    Errors:         387 (6.9%)
+    Latency avg:    200.8ms
+    Latency p50:    4.9ms
+    Latency p95:    1511.5ms
+    Latency p99:    1894.2ms
+
+============================================================
+  Phase: COOL-DOWN
+  Duration: 15s | Target RPS: 5 | Workers: 4
+============================================================
+
+  [COOL-DOWN] Summary:
+    Total requests: 74
+    Errors:         4 (5.4%)
+    Latency avg:    272.6ms
+    Latency p50:    26.6ms
+    Latency p95:    1823.8ms
+    Latency p99:    1963.1ms
+
+============================================================
+  FINAL SUMMARY
+============================================================
+    Total requests: 6347
+    Total errors:   415 (6.5%)
+    Latency avg:    207.1ms
+    Latency p50:    5.0ms
+    Latency p95:    1526.4ms
+    Latency p99:    1901.4ms
+============================================================
+
+  Per-Endpoint Breakdown:
+    GET /api/health
+      Requests: 461 | Errors: 0 (0.0%) | p95: 7.7ms
+    GET /api/slow
+      Requests: 951 | Errors: 0 (0.0%) | p95: 1927.5ms
+    GET /api/users/1
+      Requests: 7 | Errors: 0 (0.0%) | p95: 188.4ms
+    GET /api/users/10
+      Requests: 12 | Errors: 0 (0.0%) | p95: 201.5ms
+    GET /api/users/100
+      Requests: 9 | Errors: 0 (0.0%) | p95: 166.1ms
+    GET /api/users/11
+      Requests: 5 | Errors: 0 (0.0%) | p95: 94.8ms
+    GET /api/users/12
+      Requests: 4 | Errors: 0 (0.0%) | p95: 188.4ms
+    GET /api/users/13
+      Requests: 9 | Errors: 0 (0.0%) | p95: 198.9ms
+    GET /api/users/14
+      Requests: 6 | Errors: 0 (0.0%) | p95: 202.5ms
+    GET /api/users/15
+      Requests: 9 | Errors: 0 (0.0%) | p95: 195.8ms
+    GET /api/users/16
+      Requests: 7 | Errors: 0 (0.0%) | p95: 186.8ms
+    GET /api/users/17
+      Requests: 5 | Errors: 0 (0.0%) | p95: 143.6ms
+    GET /api/users/18
+      Requests: 11 | Errors: 0 (0.0%) | p95: 179.5ms
+    GET /api/users/19
+      Requests: 11 | Errors: 0 (0.0%) | p95: 192.6ms
+    GET /api/users/2
+      Requests: 8 | Errors: 0 (0.0%) | p95: 190.9ms
+    GET /api/users/20
+      Requests: 13 | Errors: 0 (0.0%) | p95: 200.4ms
+    GET /api/users/21
+      Requests: 10 | Errors: 0 (0.0%) | p95: 184.8ms
+    GET /api/users/22
+      Requests: 5 | Errors: 0 (0.0%) | p95: 189.6ms
+    GET /api/users/23
+      Requests: 2 | Errors: 0 (0.0%) | p95: 76.0ms
+    GET /api/users/24
+      Requests: 10 | Errors: 0 (0.0%) | p95: 176.5ms
+    GET /api/users/25
+      Requests: 7 | Errors: 0 (0.0%) | p95: 163.4ms
+    GET /api/users/26
+      Requests: 7 | Errors: 0 (0.0%) | p95: 169.3ms
+    GET /api/users/27
+      Requests: 7 | Errors: 0 (0.0%) | p95: 207.4ms
+    GET /api/users/28
+      Requests: 5 | Errors: 0 (0.0%) | p95: 201.7ms
+    GET /api/users/29
+      Requests: 11 | Errors: 0 (0.0%) | p95: 196.2ms
+    GET /api/users/3
+      Requests: 5 | Errors: 0 (0.0%) | p95: 184.4ms
+    GET /api/users/30
+      Requests: 11 | Errors: 0 (0.0%) | p95: 195.0ms
+    GET /api/users/31
+      Requests: 7 | Errors: 0 (0.0%) | p95: 173.3ms
+    GET /api/users/32
+      Requests: 5 | Errors: 0 (0.0%) | p95: 117.0ms
+    GET /api/users/33
+      Requests: 7 | Errors: 0 (0.0%) | p95: 183.1ms
+    GET /api/users/34
+      Requests: 9 | Errors: 0 (0.0%) | p95: 196.3ms
+    GET /api/users/35
+      Requests: 12 | Errors: 0 (0.0%) | p95: 206.4ms
+    GET /api/users/36
+      Requests: 12 | Errors: 0 (0.0%) | p95: 203.8ms
+    GET /api/users/37
+      Requests: 14 | Errors: 0 (0.0%) | p95: 208.3ms
+    GET /api/users/38
+      Requests: 6 | Errors: 0 (0.0%) | p95: 194.3ms
+    GET /api/users/39
+      Requests: 11 | Errors: 0 (0.0%) | p95: 194.6ms
+    GET /api/users/4
+      Requests: 2 | Errors: 0 (0.0%) | p95: 188.3ms
+    GET /api/users/40
+      Requests: 7 | Errors: 0 (0.0%) | p95: 148.7ms
+    GET /api/users/41
+      Requests: 6 | Errors: 0 (0.0%) | p95: 173.2ms
+    GET /api/users/42
+      Requests: 5 | Errors: 0 (0.0%) | p95: 173.6ms
+    GET /api/users/43
+      Requests: 11 | Errors: 0 (0.0%) | p95: 181.8ms
+    GET /api/users/44
+      Requests: 5 | Errors: 0 (0.0%) | p95: 202.8ms
+    GET /api/users/45
+      Requests: 5 | Errors: 0 (0.0%) | p95: 185.1ms
+    GET /api/users/46
+      Requests: 4 | Errors: 0 (0.0%) | p95: 135.7ms
+    GET /api/users/47
+      Requests: 7 | Errors: 0 (0.0%) | p95: 195.2ms
+    GET /api/users/48
+      Requests: 8 | Errors: 0 (0.0%) | p95: 163.9ms
+    GET /api/users/49
+      Requests: 4 | Errors: 0 (0.0%) | p95: 191.0ms
+    GET /api/users/5
+      Requests: 3 | Errors: 0 (0.0%) | p95: 117.8ms
+    GET /api/users/50
+      Requests: 15 | Errors: 0 (0.0%) | p95: 185.0ms
+    GET /api/users/51
+      Requests: 9 | Errors: 0 (0.0%) | p95: 207.0ms
+    GET /api/users/52
+      Requests: 7 | Errors: 0 (0.0%) | p95: 191.5ms
+    GET /api/users/53
+      Requests: 8 | Errors: 0 (0.0%) | p95: 168.0ms
+    GET /api/users/54
+      Requests: 11 | Errors: 0 (0.0%) | p95: 189.1ms
+    GET /api/users/55
+      Requests: 11 | Errors: 0 (0.0%) | p95: 190.4ms
+    GET /api/users/56
+      Requests: 12 | Errors: 0 (0.0%) | p95: 153.2ms
+    GET /api/users/57
+      Requests: 9 | Errors: 0 (0.0%) | p95: 196.8ms
+    GET /api/users/58
+      Requests: 8 | Errors: 0 (0.0%) | p95: 199.8ms
+    GET /api/users/59
+      Requests: 2 | Errors: 0 (0.0%) | p95: 180.4ms
+    GET /api/users/6
+      Requests: 8 | Errors: 0 (0.0%) | p95: 201.4ms
+    GET /api/users/60
+      Requests: 6 | Errors: 0 (0.0%) | p95: 163.4ms
+    GET /api/users/61
+      Requests: 11 | Errors: 0 (0.0%) | p95: 203.5ms
+    GET /api/users/62
+      Requests: 11 | Errors: 0 (0.0%) | p95: 207.6ms
+    GET /api/users/63
+      Requests: 11 | Errors: 0 (0.0%) | p95: 172.4ms
+    GET /api/users/64
+      Requests: 7 | Errors: 0 (0.0%) | p95: 163.8ms
+    GET /api/users/65
+      Requests: 7 | Errors: 0 (0.0%) | p95: 187.2ms
+    GET /api/users/66
+      Requests: 7 | Errors: 0 (0.0%) | p95: 162.1ms
+    GET /api/users/67
+      Requests: 8 | Errors: 0 (0.0%) | p95: 207.8ms
+    GET /api/users/68
+      Requests: 11 | Errors: 0 (0.0%) | p95: 204.7ms
+    GET /api/users/69
+      Requests: 5 | Errors: 0 (0.0%) | p95: 136.9ms
+    GET /api/users/7
+      Requests: 15 | Errors: 0 (0.0%) | p95: 194.6ms
+    GET /api/users/70
+      Requests: 7 | Errors: 0 (0.0%) | p95: 187.5ms
+    GET /api/users/71
+      Requests: 7 | Errors: 0 (0.0%) | p95: 207.9ms
+    GET /api/users/72
+      Requests: 5 | Errors: 0 (0.0%) | p95: 121.9ms
+    GET /api/users/73
+      Requests: 17 | Errors: 0 (0.0%) | p95: 195.0ms
+    GET /api/users/74
+      Requests: 14 | Errors: 0 (0.0%) | p95: 202.4ms
+    GET /api/users/75
+      Requests: 8 | Errors: 0 (0.0%) | p95: 187.2ms
+    GET /api/users/76
+      Requests: 8 | Errors: 0 (0.0%) | p95: 195.8ms
+    GET /api/users/77
+      Requests: 7 | Errors: 0 (0.0%) | p95: 169.6ms
+    GET /api/users/78
+      Requests: 10 | Errors: 0 (0.0%) | p95: 168.1ms
+    GET /api/users/79
+      Requests: 8 | Errors: 0 (0.0%) | p95: 153.9ms
+    GET /api/users/8
+      Requests: 6 | Errors: 0 (0.0%) | p95: 205.0ms
+    GET /api/users/80
+      Requests: 8 | Errors: 0 (0.0%) | p95: 192.5ms
+    GET /api/users/81
+      Requests: 13 | Errors: 0 (0.0%) | p95: 193.7ms
+    GET /api/users/82
+      Requests: 9 | Errors: 0 (0.0%) | p95: 190.3ms
+    GET /api/users/83
+      Requests: 4 | Errors: 0 (0.0%) | p95: 198.1ms
+    GET /api/users/84
+      Requests: 4 | Errors: 0 (0.0%) | p95: 168.2ms
+    GET /api/users/85
+      Requests: 6 | Errors: 0 (0.0%) | p95: 200.7ms
+    GET /api/users/86
+      Requests: 8 | Errors: 0 (0.0%) | p95: 200.8ms
+    GET /api/users/87
+      Requests: 14 | Errors: 0 (0.0%) | p95: 203.2ms
+    GET /api/users/88
+      Requests: 7 | Errors: 0 (0.0%) | p95: 180.5ms
+    GET /api/users/89
+      Requests: 7 | Errors: 0 (0.0%) | p95: 138.0ms
+    GET /api/users/9
+      Requests: 9 | Errors: 0 (0.0%) | p95: 190.1ms
+    GET /api/users/90
+      Requests: 7 | Errors: 0 (0.0%) | p95: 202.0ms
+    GET /api/users/91
+      Requests: 4 | Errors: 0 (0.0%) | p95: 84.3ms
+    GET /api/users/92
+      Requests: 10 | Errors: 0 (0.0%) | p95: 187.5ms
+    GET /api/users/93
+      Requests: 9 | Errors: 0 (0.0%) | p95: 182.4ms
+    GET /api/users/94
+      Requests: 9 | Errors: 0 (0.0%) | p95: 191.3ms
+    GET /api/users/95
+      Requests: 4 | Errors: 0 (0.0%) | p95: 185.5ms
+    GET /api/users/96
+      Requests: 8 | Errors: 0 (0.0%) | p95: 203.9ms
+    GET /api/users/97
+      Requests: 4 | Errors: 0 (0.0%) | p95: 201.1ms
+    GET /api/users/98
+      Requests: 5 | Errors: 0 (0.0%) | p95: 165.2ms
+    GET /api/users/99
+      Requests: 3 | Errors: 0 (0.0%) | p95: 169.8ms
+    POST /api/orders
+      Requests: 4141 | Errors: 415 (10.0%) | p95: 6.3ms
