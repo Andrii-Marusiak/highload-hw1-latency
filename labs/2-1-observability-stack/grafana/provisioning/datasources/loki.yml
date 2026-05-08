@@ -9,4 +9,5 @@ datasources:
     isDefault: false
     jsonData:
       maxLines: 1000
+      manageAlerts: false
     editable: false
