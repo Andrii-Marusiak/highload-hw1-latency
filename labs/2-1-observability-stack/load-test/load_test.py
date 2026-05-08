@@ -11,29 +11,18 @@ import requests
 BASE_URL = "http://localhost:8080"
 
 ENDPOINTS = [
-    ("GET",  "/api/health"),
-    ("GET",  "/api/users/{id}"),
+    ("GET", "/api/health"),
+    ("GET", "/api/users/{id}"),
     ("POST", "/api/orders"),
-    ("GET",  "/api/slow"),
+    ("GET", "/api/slow"),
 ]
 
 PHASES = [
-    {"name": "warm-up",      "duration_s": 15,  "rps": 15,   "workers": 10},
-    {"name": "steady-state", "duration_s": 30,  "rps": 80,   "workers": 40},
-    {"name": "ramp-up",      "duration_s": 20,  "rps": 500,  "workers": 250},
-    {"name": "saturation",   "duration_s": 60,  "rps": 2000, "workers": 1000},
-    {"name": "error-flood",  "duration_s": 30,  "rps": 1200, "workers": 600},
-    {"name": "cool-down",    "duration_s": 15,  "rps": 15,   "workers": 10},
+    {"name": "warm-up", "duration_s": 15, "rps": 5, "workers": 4},
+    {"name": "steady-state", "duration_s": 30, "rps": 20, "workers": 10},
+    {"name": "saturation", "duration_s": 45, "rps": 150, "workers": 80},
+    {"name": "cool-down", "duration_s": 15, "rps": 5, "workers": 4},
 ]
-
-ENDPOINT_WEIGHTS = {
-    "warm-up":      [0.20, 0.30, 0.30, 0.20],
-    "steady-state": [0.15, 0.25, 0.30, 0.30],
-    "ramp-up":      [0.05, 0.10, 0.30, 0.55],
-    "saturation":   [0.02, 0.05, 0.33, 0.60],
-    "error-flood":  [0.02, 0.03, 0.90, 0.05],
-    "cool-down":    [0.20, 0.30, 0.30, 0.20],
-}
 
 
 def make_request(method, path):
@@ -41,9 +30,9 @@ def make_request(method, path):
     start = time.perf_counter()
     try:
         if method == "GET":
-            resp = requests.get(url, timeout=15)
+            resp = requests.get(url, timeout=10)
         else:
-            resp = requests.post(url, json={"item": "test"}, timeout=15)
+            resp = requests.post(url, json={"item": "test"}, timeout=10)
         elapsed = time.perf_counter() - start
         return {
             "method": method,
@@ -65,10 +54,13 @@ def make_request(method, path):
 
 
 def pick_endpoint(phase_name):
-    weights = ENDPOINT_WEIGHTS.get(phase_name, [0.25, 0.25, 0.25, 0.25])
+    if phase_name == "saturation":
+        weights = [0.05, 0.10, 0.70, 0.15]
+    else:
+        weights = [0.20, 0.30, 0.30, 0.20]
     method, path = random.choices(ENDPOINTS, weights=weights, k=1)[0]
     if "{id}" in path:
-        path = path.replace("{id}", str(random.randint(1, 1000)))
+        path = path.replace("{id}", str(random.randint(1, 100)))
     return method, path
 
 
@@ -85,36 +77,18 @@ def run_phase(phase):
     print(f"{'='*60}")
 
     results = []
-    submitted = 0
     start_time = time.time()
     end_time = start_time + duration
-    last_progress = start_time
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = []
         while time.time() < end_time:
             method, path = pick_endpoint(name)
             futures.append(executor.submit(make_request, method, path))
-            submitted += 1
-
-            now = time.time()
-            if now - last_progress >= 10:
-                elapsed = now - start_time
-                actual_rps = submitted / elapsed if elapsed > 0 else 0
-                print(f"  [{name}] {elapsed:.0f}s elapsed | submitted: {submitted} | actual RPS: {actual_rps:.0f}")
-                last_progress = now
-
-            sleep_until = start_time + submitted * interval
-            remaining = sleep_until - time.time()
-            if remaining > 0:
-                time.sleep(remaining)
+            time.sleep(interval)
 
         for future in as_completed(futures):
             results.append(future.result())
-
-    elapsed_total = time.time() - start_time
-    actual_rps = len(results) / elapsed_total if elapsed_total > 0 else 0
-    print(f"  [{name}] Done: {len(results)} requests in {elapsed_total:.1f}s → {actual_rps:.0f} actual RPS")
 
     return results
 
